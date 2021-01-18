@@ -1,0 +1,403 @@
+//app.js
+
+import React, { useState } from 'react';
+import {Image,StyleSheetView, ImageBackground,View} from 'react-native'
+import GlobalStyle from "./Styles.js";
+import arkaplan2 from "./assets/arkaplan2.png";
+import PicturePage from "./PicturePage.js";
+import CameraModule from "./Camera.js";
+const App = () => {
+  const [image, setImage] = useState(null)
+
+  return (
+    <View style={{ flex: 1 }}>
+      <ImageBackground source={arkaplan2} style={GlobalStyle.container2}>
+        <View
+          style={{
+            backgroundColor: "#eeee",
+            width: 350,
+            height: 350,
+            left:-10,
+            borderRadius: 20,
+            marginBottom: 250,
+          }}
+        >
+          <Image
+            source={{ uri: image }}
+            style={{
+              left: 0,
+              width: 375,
+              height: 625,
+              borderRadius: 10,
+              marginTop: 0,
+
+            }}
+          />
+        </View>
+        <CameraModule setImage={setImage}/>
+        
+        <PicturePage setImage={setImage} />
+        
+      </ImageBackground>
+    </View>
+
+  );
+
+};
+
+export default App;
+
+
+
+
+//UploadImages.js
+
+
+import { StyleSheet,} from 'react-native'
+import storage from '@react-native-firebase/storage'
+let gonder_uri;
+const UploadImages = async (uri, setImage, isim) => {
+    const uploadUri = uri;
+    let filename = uploadUri.substring(uploadUri.lastIndexOf('/') + 1);
+
+    try {
+        await storage().ref(`images-${isim}/${filename}`).putFile(uploadUri)
+       
+        var deneme = await storage().ref(`images-${isim}/${filename}`).getDownloadURL().then(function (imageUri) {
+            return imageUri;
+        })
+        gonder_uri = deneme;
+        
+
+
+    } catch (e) {
+        console.log(e);
+    }
+
+    async function postData(url = "", data = {}) {
+        
+        console.log("data", data);
+        const response = await fetch(url, {
+          method: "POST",
+          mode: "cors", 
+          cache: "no-cache", 
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          redirect: "follow", 
+          referrerPolicy: "no-referrer", 
+          body: JSON.stringify(data),
+        });
+        
+        return response.json(); 
+      }
+   
+    await postData("https://yazlab-server2.herokuapp.com/send-data", {
+    answer: filename,
+    option: isim,
+    gonderilenUri: gonder_uri,
+  }).then((response) => {
+    console.log(JSON.stringify(response));
+  });
+   
+  setTimeout(async () => {
+  
+    var deneme2 = await
+      storage()
+      .ref(filename)    
+      .getDownloadURL()
+      .then(function (imageUri) {
+        return imageUri;
+      });
+    
+    setImage(deneme2);
+  }, 10000);
+
+    
+    
+}
+export default UploadImages;
+const styles = StyleSheet.create({})
+
+
+
+
+//PicturePage.js
+
+
+import React from 'react'
+import { StyleSheet, Text, View ,Alert} from 'react-native'
+import ImagePicker from 'react-native-image-crop-picker';
+import { Button } from "react-native-paper";
+import UploadImages from "./UploadImages.js";
+export default class PicturePage extends React.Component {
+
+    GaleridenSec = (cropit, circular = false, mediaType) => {
+        ImagePicker.openPicker({
+          width: 375,
+          height: 635,
+          cropperCircleOverlay: circular,
+          sortOrder: 'none',
+          compressImageMaxWidth: 375,
+          compressImageMaxHeight: 635,
+          compressImageQuality: 1,
+          compressVideoPreset: 'MediumQuality',
+          includeExif: true,
+          cropperStatusBarColor: 'white',
+          cropperToolbarColor: 'white',
+          cropperActiveWidgetColor: 'white',
+          cropperToolbarWidgetColor: '#3498DB',
+        })
+          .then((image) => {
+           
+            UploadImages(image.path,this.props.setImage,"Gallery")
+    
+          })
+          .catch((e) => {
+            Alert.alert("Resim Seçilmedi");
+          });
+         
+      }
+     render()
+     {
+        return (
+            <View>
+               <Button
+              icon="library"
+              onPress={() =>this.GaleridenSec()}
+              mode="contained"
+              style={{ width: "30%", marginTop: 10, top: 40,width:200 }}
+            >
+              Galeriden Seç
+            </Button>
+            </View>
+        );
+     }
+    
+}
+
+const styles = StyleSheet.create({
+    container: {
+        width: "50%",
+        marginTop: 20,
+        paddingTop: 40,
+        alignItems: "center",
+      },
+})
+
+
+//Camera.js
+
+
+import React from 'react'
+import { StyleSheet, Text, View } from 'react-native'
+import UploadImages from "./UploadImages.js";
+import { Button } from "react-native-paper";
+import ImagePicker from 'react-native-image-crop-picker';
+const Camera = (props) => {
+    const fotoCek = (cropping, mediaType = 'photo') => {
+        ImagePicker.openCamera({
+            width: 375,
+            height: 635,
+            includeExif: true,
+            mediaType,
+        })
+            .then((image) => {
+                UploadImages(image.path,props.setImage,"Camera")
+            })
+            .catch((e) => alert(e));
+    }
+
+
+    return (
+        <View>
+            <Button
+                style={{ width: "30%", marginTop: 10, top: 40, width: 200 }}
+                icon="camera"
+                mode="contained"
+                onPress={() => fotoCek(false)}
+            >
+                Camera
+        </Button>
+        </View>
+    )
+}
+
+const styles = StyleSheet.create({})
+export default Camera;
+
+
+
+//Styles.js
+
+
+import { StyleSheet } from "react-native";
+
+const styles = StyleSheet.create({
+  containerText: {
+    backgroundColor: "#eaeaea",
+  },
+
+  container2: {
+    flex: 1,
+    height: null,
+    width: null,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  Button: {
+    top: 70,
+    left: 40,
+    elevation: 8,
+    backgroundColor: "#009688",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    elevation: 6,
+  },
+  container: {
+    flex: 1,
+  },
+  camera: {
+   
+    justifyContent:"flex-start",
+    width: 250, height: 250,
+    top:1,
+   
+  },
+  buttonContainer: {
+    flex: 1,
+    backgroundColor: "transparent",
+    flexDirection: "row",
+    margin: 20,
+  },
+  button: {
+    flex: 0.1,
+    alignSelf: "flex-end",
+    alignItems: "center",
+  },
+  text: {
+    fontSize: 12,
+    color: "white",
+  },
+});
+
+export default styles;
+
+
+
+//server.js
+
+
+const vision = require("@google-cloud/vision");
+const fs = require("fs");
+const uuid = require("uuid-v4");
+const { createCanvas, loadImage } = require("canvas");
+const express = require("express");
+const { request } = require("http");
+const bodyParser = require("body-parser");
+var cors = require("cors");
+const app = express();
+
+var PORT = process.env.PORT || 5000;
+app.use(cors());
+app.use(bodyParser.json());
+
+const admin = require("firebase-admin");
+const serviceAccount = require("./APIkey.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: "yazlab22.appspot.com",
+});
+
+async function basla(input, res) {
+  var bucket = admin.storage().bucket();
+  var filename = input;
+
+  async function DosyaYukle() {
+    const metadata = {
+      metadata: {
+        firebaseStorageDownloadTokens: uuid(),
+      },
+      contentType: "image/jpg",
+      cacheControl: "public, max-age=31536000",
+    };
+    await bucket.upload(filename, {
+      gzip: true,
+      metadata: metadata,
+    });
+
+  }
+
+  DosyaYukle().catch(console.error);
+
+  await res.json("Nesne Tespit Edildi");
+}
+
+async function tensorflow(input, isim, gonderilenUri, res) {
+  let variable = `gs://yazlab22.appspot.com/images-${isim}/${input}`;
+  const client = new vision.ImageAnnotatorClient({
+    keyFilename: "APIkey.json",
+  });
+
+  const [result] = await client.objectLocalization(variable);
+  const objects = result.localizedObjectAnnotations;
+
+  await loadImage(gonderilenUri).then((image) => {
+    const boya = createCanvas(image.width, image.height);
+    const ctx = boya.getContext("2d");
+    ctx.drawImage(image, 0, 0, image.width, image.height);
+    objects.forEach((object) => {
+
+      const vertices = object.boundingPoly.normalizedVertices;
+      var x1 = vertices[0].x;
+      var y1 = vertices[0].y;
+      var uzunluk = vertices[1].x - vertices[0].x;
+      var genislik = vertices[2].y - vertices[1].y;
+
+      ctx.lineWidth = 12;
+      ctx.fillStyle = "#cc003d";
+      ctx.font = "125px Impact";
+      ctx.fillText(object.name, x1 * image.width, y1 * image.height - 5);
+      ctx.strokeStyle = "#00ff00";
+      ctx.strokeRect(
+        x1 * image.width,
+        y1 * image.height,
+        uzunluk * image.width,
+        genislik * image.height
+      );
+    });
+    ctx.fillStyle = "#fad346";
+    ctx.font = "125px Impact";
+    ctx.fillText("Obje sayısı:  " + objects.length, 20, image.height - 60);
+    const temp = boya.toBuffer("image/jpeg");
+    fs.writeFileSync(`./${input}`, temp);
+  });
+  await basla(input, res);
+}
+var input;
+app.post("/send-data", async function (req, res) {
+  const { answer, option, gonderilenUri } = req.body;
+
+  await tensorflow(answer, option, gonderilenUri, res);
+});
+
+app.get("/", function (req, res) {
+  res.send("welcome");
+});
+
+app.listen(PORT, function () {
+  console.log("ready");
+});
+
+
+
+
+
+
+
+
+
+
