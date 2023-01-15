@@ -1,3 +1,11 @@
+PROJE AMACI
+
+Bu uygulamanın amacı kullanıcı tarafından React Native ile geliştirilen uygulama üzerinden
+anlık görüntü alınarak bulut veritabanlarından birine gönderme,veritabanına gelen resim üzerinden
+nesne tanıma yapabilmek için görüntü işleme algoritmalarını kullanabilme ve veritabanı üzerinden
+tekrar uygulama ile haberleştirerek işlenmiş resmi uygulamaya gönderebilmektir
+
+
 AKILLI TELEFONLE NESNE TESPITI UYGULAMASI
 
      Bu readme.txt dosyası, Akıllı telefonla ile nesne tespiti dosyaları projesi koduna aittir. 
